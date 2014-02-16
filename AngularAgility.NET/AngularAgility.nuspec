@@ -1,0 +1,24 @@
+<?xml version="1.0"?>
+<package >
+  <metadata>
+    <id>AngularAgility.NET</id>
+    <version>0.1.0</version>
+    <title>AngularAgility.NET</title>
+    <authors>AngularAgility Contributors</authors>
+    <owners>davidboike</owners>
+    <licenseUrl>https://github.com/AngularAgility/AngularAgility.NET/blob/master/LICENSE.md</licenseUrl>
+    <projectUrl>https://github.com/AngularAgility/AngularAgility.NET</projectUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>Razor shortcuts for generating markup for AngularJS markup based on .NET models.</description>
+    <copyright>Copyright 2014 AngularAgility</copyright>
+    <tags>Angular AngularJS AspNet Mvc AspNetMvc</tags>
+		<dependencies>
+			<dependency id="Microsoft.AspNet.Mvc" version="5.0.0" />
+			<dependency id="Microsoft.AspNet.Razor" version="3.0.0" />
+			<dependency id="Microsoft.AspNet.WebPages" version="3.0.0" />
+			<dependency id="Microsoft.Web.Infrastructure" version="1.0.0.0" />
+		</dependencies>
+  </metadata>
+	<files>
+	</files>
+</package>

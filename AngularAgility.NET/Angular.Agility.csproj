@@ -98,6 +98,7 @@
     <Compile Include="WebPageExtensions.cs" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="AngularAgility.nuspec" />
     <None Include="packages.config" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
