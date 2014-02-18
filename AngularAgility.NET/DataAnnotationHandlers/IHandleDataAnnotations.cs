@@ -1,12 +1,14 @@
-﻿using System;
+﻿using Angular.Agility.Validation;
+using System;
 using System.Web.Mvc;
 
 namespace Angular.Agility.DataAnnotationHandlers
 {
-	public interface IHandleDataAnnotations<in TBuilder, in TAttribute>
-		where TBuilder : TagBuilder
+	public interface IHandleDataAnnotations<in TAttribute>
 		where TAttribute : Attribute
 	{
-		void Handle(TBuilder builder, TAttribute att, AgilityMetadata metadata);
+		void DecorateEditor(EditorBuilder builder, TAttribute att, AgilityMetadata metadata);
+
+		ValidationMessageData GetValidationMessage(TAttribute att, AgilityMetadata metadata);
 	}
 }

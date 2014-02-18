@@ -14,7 +14,7 @@ namespace Angular.Agility
 		public FormBuilder(AgilityHelper<TModel> agilityHelper, string formName, IDictionary<string, object> htmlAttributes)
 		{
 			AgilityHelper = agilityHelper;
-			AgilityHelper.FormName = formName;
+			AgilityHelper.FormContext = new FormContext() { FormName = formName };
 
 			var tag = new TagBuilder("form");
 			tag.MergeAttributes(htmlAttributes);
@@ -29,7 +29,7 @@ namespace Angular.Agility
 		public void Dispose()
 		{
 			AgilityHelper._page.Output.Write("</form>");
-			AgilityHelper.FormName = null;
+			AgilityHelper.FormContext = null;
 		}
 	}
 }

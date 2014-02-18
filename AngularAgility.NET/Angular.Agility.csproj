@@ -77,24 +77,24 @@
     <Compile Include="AgilityMetadata.cs" />
     <Compile Include="AgilityStartup.cs" />
     <Compile Include="AgilityPage.cs" />
-    <Compile Include="DataAnnotationHandlers\Editors\DisplayAttributeHandler.cs" />
-    <Compile Include="DataAnnotationHandlers\Editors\EmailAddressAttributeHandler.cs" />
-    <Compile Include="DataAnnotationHandlers\Editors\PhoneAttributeHandler.cs" />
-    <Compile Include="DataAnnotationHandlers\Editors\RangeAttributeHandler.cs" />
-    <Compile Include="DataAnnotationHandlers\Editors\RegularExpressionAttributeHandler.cs" />
-    <Compile Include="DataAnnotationHandlers\Editors\RequiredAttributeHandler.cs" />
-    <Compile Include="DataAnnotationHandlers\Validators\EmailAddressAttributeHandler.cs" />
-    <Compile Include="DataAnnotationHandlers\Validators\RequiredAttributeHandler.cs" />
-    <Compile Include="DataAnnotationHandlers\Validators\ValidationMessageFactory.cs" />
+    <Compile Include="DataAnnotationHandlers\DisplayAttributeHandler.cs" />
+    <Compile Include="DataAnnotationHandlers\EmailAddressAttributeHandler.cs" />
+    <Compile Include="DataAnnotationHandlers\PhoneAttributeHandler.cs" />
+    <Compile Include="DataAnnotationHandlers\RangeAttributeHandler.cs" />
+    <Compile Include="DataAnnotationHandlers\RegularExpressionAttributeHandler.cs" />
+    <Compile Include="DataAnnotationHandlers\RequiredAttributeHandler.cs" />
+    <Compile Include="Validation\ValidationMessageData.cs" />
+    <Compile Include="Validation\ValidationMessageFactory.cs" />
     <Compile Include="EditorBuilder.cs" />
     <Compile Include="DefaultHtml5InputBuilder.cs" />
     <Compile Include="FormBuilder.cs" />
+    <Compile Include="FormContext.cs" />
     <Compile Include="FormGroupBuilder.cs" />
     <Compile Include="DataAnnotationHandlers\IHandleDataAnnotations.cs" />
     <Compile Include="Properties\Annotations.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="ValidationContainerBuilder.cs" />
-    <Compile Include="ValidationMessageBuilder.cs" />
+    <Compile Include="Validation\ValidationContainerBuilder.cs" />
+    <Compile Include="Validation\ValidationSummaryBuilder.cs" />
     <Compile Include="WebPageExtensions.cs" />
   </ItemGroup>
   <ItemGroup>

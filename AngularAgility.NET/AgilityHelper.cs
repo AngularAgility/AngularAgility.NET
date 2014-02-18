@@ -6,6 +6,8 @@ using System.Web.Mvc;
 using System.Web.Routing;
 using System.Web.WebPages;
 using Angular.Agility.Annotations;
+using Angular.Agility.Validation;
+using System.Web;
 
 namespace Angular.Agility
 {
@@ -23,7 +25,7 @@ namespace Angular.Agility
 
 		private bool UseBootstrapClasses { get; set; }
 		private bool UseNamedInputs { get; set; }
-		public string FormName { get; set; }
+		public FormContext FormContext { get; set; }
 
 		#region EditorFor
 
@@ -97,6 +99,27 @@ namespace Angular.Agility
 			AgilityStartup.Config.RunAnnotations(tag, metadata.MemberAttributes, metadata);
 			return tag;
 		}
+
+		#endregion
+
+		#region ValidationSummary
+
+		public IHtmlString ValidationSummary(string message = null, object htmlAttributes = null)
+		{
+			RouteValueDictionary htmlAttributesDictionary = AnonymousObjectToHtmlAttributes(htmlAttributes);
+			return ValidationSummary(message, htmlAttributesDictionary);
+		}
+
+		public IHtmlString ValidationSummary(string message, IDictionary<string, object> htmlAttributes)
+		{
+			if (this.FormContext == null)
+			{
+				throw new InvalidOperationException("Cannot create validation summary without a form");
+			}
+
+			return new ValidationSummaryBuilder(this.FormContext, message);
+		}
+
 
 		#endregion
 
@@ -196,7 +219,7 @@ namespace Angular.Agility
 
 			tag.Model(ngModel);
 
-			AgilityStartup.Config.RunAnnotations(tag, metadata.MemberAttributes, metadata);
+			AgilityStartup.Config.RunAnnotations(tag, metadata.MemberAttributes, metadata, this.FormContext);
 
 			tag.MergeAttributes(htmlAttributes);
 
@@ -217,7 +240,8 @@ namespace Angular.Agility
 
 		private string GetUsableFormName(AgilityMetadata metadata)
 		{
-			return FormName ?? metadata.ModelType.Name;
+			var formContextName = FormContext == null ? null : FormContext.FormName;
+			return formContextName ?? metadata.ModelType.Name;
 		}
 
 		#endregion

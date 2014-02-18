@@ -1,10 +1,11 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using Angular.Agility.Validation;
 
-namespace Angular.Agility.DataAnnotationHandlers.Editors
+namespace Angular.Agility.DataAnnotationHandlers
 {
-	public class RangeAttributeHandler : IHandleDataAnnotations<EditorBuilder, RangeAttribute>
+	public class RangeAttributeHandler : IHandleDataAnnotations<RangeAttribute>
 	{
-		public void Handle(EditorBuilder tag, RangeAttribute att, AgilityMetadata metadata)
+		public void DecorateEditor(EditorBuilder tag, RangeAttribute att, AgilityMetadata metadata)
 		{
 			var min = att.Minimum;
 			var max = att.Maximum;
@@ -30,6 +31,11 @@ namespace Angular.Agility.DataAnnotationHandlers.Editors
 				tag.Attributes.Add("min", min.ToString());
 				tag.Attributes.Add("max", max.ToString());
 			}
+		}
+
+		public ValidationMessageData GetValidationMessage(RangeAttribute att, AgilityMetadata metadata)
+		{
+			return null; // TODO
 		}
 	}
 }

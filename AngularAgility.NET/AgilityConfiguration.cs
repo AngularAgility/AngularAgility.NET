@@ -3,29 +3,24 @@ using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Web.Mvc;
 using Angular.Agility.DataAnnotationHandlers;
-using Angular.Agility.DataAnnotationHandlers.Editors;
+using Angular.Agility.Validation;
 
 namespace Angular.Agility
 {
 	public class AgilityConfiguration
 	{
-		private readonly Dictionary<AnnotationHandlerKey, AnnotationHandlerRunner> annotationHandlers =
-			new Dictionary<AnnotationHandlerKey, AnnotationHandlerRunner>();
+		private readonly Dictionary<Type, AnnotationHandlerRunner> annotationHandlers = new Dictionary<Type, AnnotationHandlerRunner>();
 		private bool configurationIsFinalized;
 		private IList<IBuildInputs> inputBuilders = new List<IBuildInputs>();
 
 		public AgilityConfiguration()
 		{
-			RegisterAnnotationHandler<EditorBuilder, RequiredAttribute, RequiredAttributeHandler>();
-			RegisterAnnotationHandler<EditorBuilder, DisplayAttribute, DisplayAttributeHandler>();
-			RegisterAnnotationHandler<EditorBuilder, RegularExpressionAttribute, RegularExpressionAttributeHandler>();
-			RegisterAnnotationHandler<EditorBuilder, RangeAttribute, RangeAttributeHandler>();
-			RegisterAnnotationHandler<EditorBuilder, EmailAddressAttribute, EmailAddressAttributeHandler>();
-			RegisterAnnotationHandler<EditorBuilder, PhoneAttribute, PhoneAttributeHandler>();
-			RegisterAnnotationHandler
-				<ValidationContainerBuilder, RequiredAttribute, DataAnnotationHandlers.Validators.RequiredAttributeHandler>();
-			RegisterAnnotationHandler
-				<ValidationContainerBuilder, EmailAddressAttribute, DataAnnotationHandlers.Validators.EmailAddressAttributeHandler>();
+			RegisterAnnotationHandler<RequiredAttribute, RequiredAttributeHandler>();
+			RegisterAnnotationHandler<DisplayAttribute, DisplayAttributeHandler>();
+			RegisterAnnotationHandler<RegularExpressionAttribute, RegularExpressionAttributeHandler>();
+			RegisterAnnotationHandler<RangeAttribute, RangeAttributeHandler>();
+			RegisterAnnotationHandler<EmailAddressAttribute, EmailAddressAttributeHandler>();
+			RegisterAnnotationHandler<PhoneAttribute, PhoneAttributeHandler>();
 		}
 
 		public IList<IBuildInputs> InputBuilders
@@ -41,24 +36,47 @@ namespace Angular.Agility
 			configurationIsFinalized = true;
 		}
 
-		public void RegisterAnnotationHandler<TBuilder, TAttribute, THandler>()
-			where THandler : IHandleDataAnnotations<TBuilder, TAttribute>, new()
-			where TBuilder : TagBuilder
+		public void RegisterAnnotationHandler<TAttribute, THandler>()
+			where THandler : IHandleDataAnnotations<TAttribute>, new()
 			where TAttribute : Attribute
 		{
-			var runner = new AnnotationHandlerRunner<TBuilder, TAttribute, THandler>();
-			var key = new AnnotationHandlerKey(typeof(TBuilder), typeof(TAttribute));
-			annotationHandlers[key] = runner;
+			var runner = new AnnotationHandlerRunner<TAttribute, THandler>();
+			annotationHandlers[typeof(TAttribute)] = runner;
 		}
 
-		internal void RunAnnotations(TagBuilder builder, IEnumerable<Attribute> attributes, AgilityMetadata metadata)
+		internal void RunAnnotations(EditorBuilder builder, IEnumerable<Attribute> attributes, AgilityMetadata metadata, FormContext formContext)
 		{
 			foreach (var att in attributes)
 			{
 				AnnotationHandlerRunner runner;
-				var key = new AnnotationHandlerKey(builder.GetType(), att.GetType());
-				if (annotationHandlers.TryGetValue(key, out runner))
-					runner.Run(builder, att, metadata);
+				if (annotationHandlers.TryGetValue(att.GetType(), out runner))
+				{
+					runner.DecorateEditor(builder, att, metadata);
+					
+					if (formContext != null)
+					{
+						var validationMessage = runner.GetValidationMessage(att, metadata);
+
+						if (validationMessage != null)
+						{
+							validationMessage.InputName = metadata.Name;
+							formContext.ValidationMessageData.Add(validationMessage);
+						}
+					}
+				}
+			}
+		}
+
+		internal void RunAnnotations(ValidationContainerBuilder builder, IEnumerable<Attribute> attributes, AgilityMetadata metadata)
+		{
+			foreach (var att in attributes)
+			{
+				AnnotationHandlerRunner runner;
+				if (annotationHandlers.TryGetValue(att.GetType(), out runner))
+				{
+					var validationMessage = runner.GetValidationMessage(att, metadata);
+					builder.AddValidationMessage(validationMessage);
+				}
 			}
 		}
 
@@ -74,34 +92,32 @@ namespace Angular.Agility
 				throw new InvalidOperationException("AgilityConfiguration cannot be modified once finalized.");
 		}
 
-		private class AnnotationHandlerKey : Tuple<Type, Type>
-		{
-			public AnnotationHandlerKey(Type builderType, Type attributeType)
-				: base(builderType, attributeType)
-			{
-			}
-		}
-
 		private abstract class AnnotationHandlerRunner
 		{
-			internal abstract void Run(TagBuilder builder, Attribute att, AgilityMetadata metadata);
+			internal abstract void DecorateEditor(EditorBuilder builder, Attribute att, AgilityMetadata metadata);
+
+			internal abstract ValidationMessageData GetValidationMessage(Attribute att, AgilityMetadata metadata);
 		}
 
-		private class AnnotationHandlerRunner<TBuilder, TAttribute, THandler> : AnnotationHandlerRunner
-			where THandler : IHandleDataAnnotations<TBuilder, TAttribute>, new()
+		private class AnnotationHandlerRunner<TAttribute, THandler> : AnnotationHandlerRunner
+			where THandler : IHandleDataAnnotations<TAttribute>, new()
 			where TAttribute : Attribute
-			where TBuilder : TagBuilder
 		{
-			private readonly IHandleDataAnnotations<TBuilder, TAttribute> handler;
+			private readonly IHandleDataAnnotations<TAttribute> handler;
 
 			internal AnnotationHandlerRunner()
 			{
 				handler = new THandler();
 			}
 
-			internal override void Run(TagBuilder builder, Attribute att, AgilityMetadata metadata)
+			internal override void DecorateEditor(EditorBuilder builder, Attribute att, AgilityMetadata metadata)
 			{
-				handler.Handle(builder as TBuilder, att as TAttribute, metadata);
+				handler.DecorateEditor(builder, att as TAttribute, metadata);
+			}
+
+			internal override ValidationMessageData GetValidationMessage(Attribute att, AgilityMetadata metadata)
+			{
+				return handler.GetValidationMessage(att as TAttribute, metadata);
 			}
 		}
 	}
