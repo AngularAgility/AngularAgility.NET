@@ -27,6 +27,7 @@ namespace Angular.Agility.Validation
 			ul.InnerHtml = listItems.ToString();
 
 			this.InnerHtml = title.ToString() + ul.ToString();
+			this.Attributes["ng-show"] = string.Format("{0}.$dirty && {0}.$invalid", formContext.FormName);
 		}
 
 		public string ToHtmlString()
