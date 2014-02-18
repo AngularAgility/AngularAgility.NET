@@ -76,7 +76,7 @@ namespace Angular.Agility
 		public IBuildValidationContainers ValidationMessageFor<TParameter>(Expression<Func<TModel, TParameter>> expression)
 		{
 			AgilityMetadata metadata = AgilityMetadata.FromLambdaExpression(expression);
-			string formName = FormName ?? metadata.ModelType.Name;
+			string formName = GetUsableFormName(metadata);
 			string inputName = metadata.Name;
 			return ValidationMessageFor(expression, formName, inputName);
 		}
@@ -186,8 +186,7 @@ namespace Angular.Agility
 
 		private void ApplyMetadataToEditor(EditorBuilder tag, AgilityMetadata metadata, string ngModel, IDictionary<string, object> htmlAttributes)
 		{
-			if (ngModel != null)
-				tag.Model(ngModel);
+			tag.Model(ngModel ?? GetUsableFormName(metadata) + "." + metadata.Name);
 
 			AgilityStartup.Config.RunAnnotations(tag, metadata.MemberAttributes, metadata);
 
@@ -206,6 +205,11 @@ namespace Angular.Agility
 		{
 			var builder = new FormBuilder<TModel>(this, formName, htmlAttributes);
 			return builder;
+		}
+
+		private string GetUsableFormName(AgilityMetadata metadata)
+		{
+			return FormName ?? metadata.ModelType.Name;
 		}
 
 		#endregion
