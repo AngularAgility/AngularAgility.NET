@@ -41,19 +41,21 @@ namespace Angular.Agility
 			}, StringComparer.InvariantCultureIgnoreCase);
 		}
 
-		public EditorBuilder(string tagName)
-			: this(tagName, null)
+		public EditorBuilder(string tagName, AgilityMetadata metadata)
+			: this(tagName, metadata, null)
 		{
 		}
 
-		public EditorBuilder(string tagName, object htmlAttributes)
+		public EditorBuilder(string tagName, AgilityMetadata metadata, object htmlAttributes)
 			: base(tagName)
 		{
+			this.Metadata = metadata;
+
 			if (htmlAttributes != null)
 				MergeAttributes(new RouteValueDictionary(htmlAttributes));
 		}
 
-		public AgilityMetadata Metadata { get; internal set; }
+		public AgilityMetadata Metadata { get; private set; }
 
 		public string Id
 		{

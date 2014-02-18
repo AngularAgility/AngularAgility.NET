@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Linq.Expressions;
 using System.Web.Mvc;
 using System.Web.Routing;
@@ -39,20 +40,31 @@ namespace Angular.Agility
 		{
 			AgilityMetadata metadata = AgilityMetadata.FromLambdaExpression(expression);
 			EditorBuilder tag = BuildInput(metadata);
-			if (ngModel != null)
-				tag.Model(ngModel);
 
-			AgilityStartup.Config.RunAnnotations(tag, metadata.MemberAttributes, metadata);
+			ApplyMetadataToEditor(tag, metadata, ngModel, htmlAttributes);
 
-			tag.MergeAttributes(htmlAttributes);
+			return tag;
+		}
 
-			// TODO: Make adding the Bootstrap class optional
-			if (UseBootstrapClasses)
-				tag.AddCssClass("form-control");
+		#endregion
 
-			// TODO: Make adding the name attribute optional
-			if (UseNamedInputs)
-				tag.Attributes.Add("name", metadata.Name);
+		#region DropDownListFor
+
+		public IBuildEditors DropDownListFor<TParameter>(Expression<Func<TModel, TParameter>> expression, IEnumerable<SelectListItem> selectListItems,
+			string ngModel = null, object htmlAttributes = null)
+		{
+			RouteValueDictionary htmlAttributesDictionary = AnonymousObjectToHtmlAttributes(htmlAttributes);
+			return DropDownListFor(expression, selectListItems, ngModel, htmlAttributesDictionary);
+		}
+
+		[UsedImplicitly]
+		public IBuildEditors DropDownListFor<TParameter>(Expression<Func<TModel, TParameter>> expression, IEnumerable<SelectListItem> selectListItems,
+			string ngModel, IDictionary<string, object> htmlAttributes)
+		{
+			AgilityMetadata metadata = AgilityMetadata.FromLambdaExpression(expression);
+			EditorBuilder tag = BuildSelectList(metadata, selectListItems);
+
+			ApplyMetadataToEditor(tag, metadata, ngModel, htmlAttributes);
 
 			return tag;
 		}
@@ -154,12 +166,40 @@ namespace Angular.Agility
 			{
 				if (inputBuilder.CanBuild(dataTypeName))
 				{
-					EditorBuilder builder = inputBuilder.Build(dataTypeName);
-					builder.Metadata = metadata;
-					return builder;
+					return inputBuilder.Build(metadata);
 				}
 			}
 			throw new InvalidOperationException("Unable to create an input. There isn't any way this should be able to happen.");
+		}
+
+		private EditorBuilder BuildSelectList(AgilityMetadata metadata, IEnumerable<SelectListItem> selectListItems)
+		{
+			var selectListBuilder = AgilityStartup.Config.InputBuilders.OfType<IBuildSelectList>().FirstOrDefault();
+
+			if (selectListBuilder == null)
+			{
+				throw new InvalidOperationException("Unable to create an select list. There isn't any way this should be able to happen.");
+			}
+
+			return selectListBuilder.BuildSelectList(metadata, selectListItems);
+		}
+
+		private void ApplyMetadataToEditor(EditorBuilder tag, AgilityMetadata metadata, string ngModel, IDictionary<string, object> htmlAttributes)
+		{
+			if (ngModel != null)
+				tag.Model(ngModel);
+
+			AgilityStartup.Config.RunAnnotations(tag, metadata.MemberAttributes, metadata);
+
+			tag.MergeAttributes(htmlAttributes);
+
+			// TODO: Make adding the Bootstrap class optional
+			if (UseBootstrapClasses)
+				tag.AddCssClass("form-control");
+
+			// TODO: Make adding the name attribute optional
+			if (UseNamedInputs)
+				tag.MergeAttribute("name", metadata.Name, replaceExisting: false);
 		}
 
 		private FormBuilder<TModel> BuildForm(string formName, IDictionary<string, object> htmlAttributes)
