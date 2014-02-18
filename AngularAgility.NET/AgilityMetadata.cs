@@ -27,6 +27,8 @@ namespace Angular.Agility
 			if (expression == null)
 				throw new ArgumentNullException("expression");
 
+			var exprText = ExpressionHelper.GetExpressionText(expression);
+
 			switch (expression.Body.NodeType)
 			{
 				//case ExpressionType.ArrayIndex:
@@ -44,7 +46,7 @@ namespace Angular.Agility
 					var memberExpression = (MemberExpression)expression.Body;
 					//propertyName = memberExpression.Member is PropertyInfo ? memberExpression.Member.Name : null;
 					//containerType = memberExpression.Expression.Type;
-					return FromReflectedMember<TModel, TParameter>(memberExpression.Member);
+					return FromReflectedMember<TModel, TParameter>(memberExpression.Member, exprText);
 
 				//case ExpressionType.Parameter:
 				//	// Parameter expression means "model => model", so we delegate to FromModel
@@ -55,7 +57,7 @@ namespace Angular.Agility
 			}
 		}
 
-		public static AgilityMetadata FromReflectedMember<TModel, TParameter>(MemberInfo info)
+		public static AgilityMetadata FromReflectedMember<TModel, TParameter>(MemberInfo info, string name)
 		{
 			if (info == null)
 				throw new ArgumentNullException("info");
@@ -69,7 +71,7 @@ namespace Angular.Agility
 
 			md.Annotations = new DataAnnotations(md.MemberAttributes);
 
-			md.Name = info.Name;
+			md.Name = name;
 			if (md.Annotations.Display != null && md.Annotations.Display.Name != null)
 			{
 				md.DisplayName = md.Annotations.Display.Name;
