@@ -186,7 +186,15 @@ namespace Angular.Agility
 
 		private void ApplyMetadataToEditor(EditorBuilder tag, AgilityMetadata metadata, string ngModel, IDictionary<string, object> htmlAttributes)
 		{
-			tag.Model(ngModel ?? GetUsableFormName(metadata) + "." + metadata.Name);
+			if (ngModel == null)
+			{
+				// If no model binding string is specified, we still need to set ng-model so validation occurs.
+				// The ng-model directive itself adds a property to the parent form corresponding to its input 
+				// name, so we can't use that.  So instead we attach an "AgilityBindings" object to the form and bind to that.
+				ngModel = GetUsableFormName(metadata) + ".AgilityBindings." + metadata.Name;
+			}
+
+			tag.Model(ngModel);
 
 			AgilityStartup.Config.RunAnnotations(tag, metadata.MemberAttributes, metadata);
 
