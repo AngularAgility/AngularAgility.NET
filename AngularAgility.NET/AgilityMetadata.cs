@@ -13,6 +13,7 @@ namespace Angular.Agility
 	{
 		private AgilityMetadata()
 		{
+			this.GetValue = () => null;
 		}
 
 		public string Name { get; private set; }
@@ -22,12 +23,24 @@ namespace Angular.Agility
 		public IList<Attribute> MemberAttributes { get; private set; }
 		public DataAnnotations Annotations { get; private set; }
 
-		public static AgilityMetadata FromLambdaExpression<TModel, TParameter>(Expression<Func<TModel, TParameter>> expression)
+		public static AgilityMetadata FromLambdaExpression<TModel, TParameter>(Expression<Func<TModel, TParameter>> expression, TModel model)
 		{
 			if (expression == null)
 				throw new ArgumentNullException("expression");
 
 			var exprText = ExpressionHelper.GetExpressionText(expression);
+
+			Func<object> getValue = () =>
+			{
+				try
+				{
+					return expression.Compile()(model);
+				}
+				catch (Exception)
+				{
+					return null;
+				}
+			};
 
 			switch (expression.Body.NodeType)
 			{
@@ -46,7 +59,7 @@ namespace Angular.Agility
 					var memberExpression = (MemberExpression)expression.Body;
 					//propertyName = memberExpression.Member is PropertyInfo ? memberExpression.Member.Name : null;
 					//containerType = memberExpression.Expression.Type;
-					return FromReflectedMember<TModel, TParameter>(memberExpression.Member, exprText);
+					return FromReflectedMember<TModel, TParameter>(memberExpression.Member, exprText, getValue);
 
 				//case ExpressionType.Parameter:
 				//	// Parameter expression means "model => model", so we delegate to FromModel
@@ -57,7 +70,7 @@ namespace Angular.Agility
 			}
 		}
 
-		public static AgilityMetadata FromReflectedMember<TModel, TParameter>(MemberInfo info, string name)
+		public static AgilityMetadata FromReflectedMember<TModel, TParameter>(MemberInfo info, string name, Func<object> getValue)
 		{
 			if (info == null)
 				throw new ArgumentNullException("info");
@@ -66,7 +79,8 @@ namespace Angular.Agility
 			{
 				ModelType = typeof(TModel),
 				MemberType = typeof(TParameter),
-				MemberAttributes = info.GetCustomAttributes(true).Cast<Attribute>().ToList().AsReadOnly()
+				MemberAttributes = info.GetCustomAttributes(true).Cast<Attribute>().ToList().AsReadOnly(),
+				GetValue = getValue,
 			};
 
 			md.Annotations = new DataAnnotations(md.MemberAttributes);
@@ -122,6 +136,8 @@ namespace Angular.Agility
 					return false;
 			}
 		}
+
+		public Func<object> GetValue { get; set; }
 	}
 
 	public class DataAnnotations

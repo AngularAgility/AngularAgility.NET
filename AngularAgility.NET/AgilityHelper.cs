@@ -8,14 +8,15 @@ using System.Web.WebPages;
 using Angular.Agility.Annotations;
 using Angular.Agility.Validation;
 using System.Web;
+using System.Web.Helpers;
 
 namespace Angular.Agility
 {
 	public class AgilityHelper<TModel>
 	{
-		internal readonly WebPageBase _page;
+		internal readonly WebViewPage<TModel> _page;
 
-		public AgilityHelper(WebPageBase webPage)
+		public AgilityHelper(WebViewPage<TModel> webPage)
 		{
 			_page = webPage;
 			//TODO Define a config section for Agility, and set UseNamedInputs and UseBootstrapClasses from there
@@ -40,7 +41,7 @@ namespace Angular.Agility
 		public IBuildEditors EditorFor<TParameter>(Expression<Func<TModel, TParameter>> expression, string ngModel,
 			IDictionary<string, object> htmlAttributes)
 		{
-			AgilityMetadata metadata = AgilityMetadata.FromLambdaExpression(expression);
+			AgilityMetadata metadata = AgilityMetadata.FromLambdaExpression(expression, _page.Model);
 			EditorBuilder tag = BuildInput(metadata);
 
 			ApplyMetadataToEditor(tag, metadata, ngModel, htmlAttributes);
@@ -63,7 +64,7 @@ namespace Angular.Agility
 		public IBuildEditors DropDownListFor<TParameter>(Expression<Func<TModel, TParameter>> expression, IEnumerable<SelectListItem> selectListItems,
 			string ngModel, IDictionary<string, object> htmlAttributes)
 		{
-			AgilityMetadata metadata = AgilityMetadata.FromLambdaExpression(expression);
+			AgilityMetadata metadata = AgilityMetadata.FromLambdaExpression(expression, _page.Model);
 			EditorBuilder tag = BuildSelectList(metadata, selectListItems);
 
 			ApplyMetadataToEditor(tag, metadata, ngModel, htmlAttributes);
@@ -77,7 +78,7 @@ namespace Angular.Agility
 
 		public IBuildValidationContainers ValidationMessageFor<TParameter>(Expression<Func<TModel, TParameter>> expression)
 		{
-			AgilityMetadata metadata = AgilityMetadata.FromLambdaExpression(expression);
+			AgilityMetadata metadata = AgilityMetadata.FromLambdaExpression(expression, _page.Model);
 			string formName = GetUsableFormName(metadata);
 			string inputName = metadata.Name;
 			return ValidationMessageFor(expression, formName, inputName);
@@ -86,7 +87,7 @@ namespace Angular.Agility
 		public IBuildValidationContainers ValidationMessageFor<TParameter>(Expression<Func<TModel, TParameter>> expression,
 			string formName)
 		{
-			AgilityMetadata metadata = AgilityMetadata.FromLambdaExpression(expression);
+			AgilityMetadata metadata = AgilityMetadata.FromLambdaExpression(expression, _page.Model);
 			string inputName = metadata.Name;
 			return ValidationMessageFor(expression, formName, inputName);
 		}
@@ -94,7 +95,7 @@ namespace Angular.Agility
 		public IBuildValidationContainers ValidationMessageFor<TParameter>(Expression<Func<TModel, TParameter>> expression,
 			string formName, string inputName)
 		{
-			AgilityMetadata metadata = AgilityMetadata.FromLambdaExpression(expression);
+			AgilityMetadata metadata = AgilityMetadata.FromLambdaExpression(expression, _page.Model);
 			ValidationContainerBuilder tag = BuildValidationContainer(formName, inputName);
 			AgilityStartup.Config.RunAnnotations(tag, metadata.MemberAttributes, metadata);
 			return tag;
@@ -117,7 +118,9 @@ namespace Angular.Agility
 				throw new InvalidOperationException("Cannot create validation summary without a form");
 			}
 
-			return new ValidationSummaryBuilder(this.FormContext, message);
+			var modelState = _page.ViewData.ModelState;
+			var modelErrors = modelState.SelectMany(m => m.Value.Errors).Select(e => e.ErrorMessage).ToList();
+			return new ValidationSummaryBuilder(message, this.FormContext, modelErrors);
 		}
 
 
@@ -218,6 +221,13 @@ namespace Angular.Agility
 			}
 
 			tag.Model(ngModel);
+
+			var modelValue = metadata.GetValue();
+			if (modelValue != null)
+			{
+				var escapedValue = Json.Encode(modelValue);
+				tag.MergeAttribute("ng-init", string.Format("{0} = {1}", ngModel, escapedValue));
+			}
 
 			AgilityStartup.Config.RunAnnotations(tag, metadata.MemberAttributes, metadata, this.FormContext);
 

@@ -11,7 +11,7 @@ namespace Angular.Agility.Validation
 {
 	public class ValidationSummaryBuilder : TagBuilder, IHtmlString
 	{
-		public ValidationSummaryBuilder(FormContext formContext, string message)
+		public ValidationSummaryBuilder(string message, FormContext formContext, List<string> serverErrors)
 			: base("div")
 		{
 			var title = new TagBuilder("div");
@@ -19,6 +19,12 @@ namespace Angular.Agility.Validation
 
 			var ul = new TagBuilder("ul");
 			var listItems = new StringBuilder();
+			foreach (var serverError in serverErrors)
+			{
+				var liBuilder = new TagBuilder("li");
+				liBuilder.InnerHtml = HttpUtility.HtmlEncode(serverError);
+				listItems.AppendLine(liBuilder.ToString());
+			}
 			foreach (var validationMessage in formContext.ValidationMessageData)
 			{
 				var li = ValidationMessageFactory.BuildValidationMessage("li", formContext.FormName, validationMessage.InputName, validationMessage.ValidationName, validationMessage.Message);
@@ -27,7 +33,11 @@ namespace Angular.Agility.Validation
 			ul.InnerHtml = listItems.ToString();
 
 			this.InnerHtml = title.ToString() + ul.ToString();
-			this.Attributes["ng-show"] = string.Format("{0}.$dirty && {0}.$invalid", formContext.FormName);
+		
+			if (!serverErrors.Any())
+			{
+				this.Attributes["ng-show"] = string.Format("{0}.$dirty && {0}.$invalid", formContext.FormName);
+			}
 		}
 
 		public string ToHtmlString()
